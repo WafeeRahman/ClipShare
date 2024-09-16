@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+      "target": "es6", //JS version
+      "module": "commonjs", //For Node Projects
+      "rootDir": "src", //SRC Directory for SRC files
+      "outDir": "dist", //Build Files are in Dist
+      "strict": true,
+      "esModuleInterop": true},
+    "include": ["src/**/*.ts"], //Include all TS files in SRC
+    "exclude": ["node_modules"] //Exclude Node Modules
+  }
