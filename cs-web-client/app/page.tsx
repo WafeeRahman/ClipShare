@@ -6,7 +6,7 @@ export default function Home() {
     <main className={styles.main}>
 
       <p>
-        THIS IS NOT AWESOME TEST sadas
+        Welcome to ClipShare! Share your clips with the world.
       </p>
 
     </main>
