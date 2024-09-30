@@ -1,0 +1,45 @@
+/* page.module.css */
+
+.container {
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #333;
+    margin-bottom: 40px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .videoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+    justify-items: center;
+  }
+  
+  .videoCard {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .videoCard:hover {
+    transform: translateY(-10px);
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .thumbnail {
+    border-radius: 10px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  
+  .videoCard:hover .thumbnail {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
+  

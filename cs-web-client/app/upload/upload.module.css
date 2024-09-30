@@ -1,0 +1,67 @@
+/* app/upload/upload.module.css */
+
+.uploadContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full viewport height for centering */
+    background-color: #DAFFEF; /* Light background color */
+}
+
+.uploadForm {
+    background-color: #000; /* Black background for the form */
+    border-radius: 20px; /* Rounded corners */
+    padding: 30px; /* Increased padding */
+    width: 100%;
+    max-width: 400px; /* Limit the card's width */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Soft shadow */
+    transition: transform 0.3s ease; /* Smooth transition */
+    color:white;
+}
+
+.uploadForm:hover {
+    transform: scale(1.02); /* Slightly scale the form on hover */
+}
+
+.formGroup {
+    margin-bottom: 20px; /* Space between form fields */
+}
+
+.uploadForm input,
+.uploadForm textarea {
+    width: 100%; /* Full width for inputs */
+    padding: 12px; /* Comfortable padding */
+    margin-bottom: 15px; /* Space below each input */
+    border-radius: 10px; /* Rounded corners */
+    background-color: #333; /* Dark background for inputs */
+    color: #fff; /* White text */
+    border: 1px solid transparent; /* No border initially */
+    transition: background-color 0.3s ease; /* Smooth background transition */
+}
+
+.uploadForm input:focus,
+.uploadForm textarea:focus {
+    background-color: #444; /* Slightly lighter on focus */
+    border: 1px solid #fff; /* Add white border on focus */
+    outline: none; /* Remove default outline */
+}
+
+.submitBtn {
+    display: inline-block; /* Aligns nicely with padding */
+    width: 100%; /* Full width for button */
+    background-color: #fff; /* White background */
+    color: #000; /* Black text */
+    padding: 12px 20px; /* Comfortable padding */
+    border-radius: 10px; /* Rounded corners */
+    cursor: pointer; /* Pointer on hover */
+    text-align: center; /* Center text */
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transitions */
+    font-size: 16px; /* Modern font size */
+    border: none; /* Remove border */
+}
+
+.submitBtn:hover {
+    background-color: #000; /* Black background on hover */
+    color: #fff; /* White text on hover */
+    transform: scale(1.05); /* Scale up effect */
+}

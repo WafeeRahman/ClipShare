@@ -6,7 +6,6 @@ import SignIn from "./sign-in";
 import { onAuthStateChangeHelper } from "../firebase/firebase";
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
-import Upload from "./upload";
 export default function Navbar() {
     const [user, setUser] = useState<User | null>(null);
     useEffect(() => {
@@ -29,7 +28,7 @@ export default function Navbar() {
                 />
             </Link>
             {
-                user && <Upload/>
+                user && <Link href="/upload">Upload Video</Link>
             }
    
             <SignIn user={user}/>
