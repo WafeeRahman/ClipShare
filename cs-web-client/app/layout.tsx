@@ -23,7 +23,7 @@ export default function RootLayout({
       </head>
       <body style={{ backgroundColor: "#DAFFEF", fontFamily: "'Inter', Arial, sans-serif" }}>
         <Navbar />
-        <Search />
+    
         {children}
       </body>
     </html>

@@ -1,12 +1,80 @@
+/* Navbar container */
 .nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1em;
-  }
-
-
-.logoContainer {
-    cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5em 3em;
+  background-color: rgba(218, 255, 239, 0.2); /* Semi-transparent background */
+  backdrop-filter: blur(10px); /* Blur background without shadow */
+  position: relative;
+  z-index: 100;
+  width: 100%; /* Ensure the navbar spans the full width */
+  box-sizing: border-box; /* Ensure padding doesn't cause overflow */
 }
 
+/* Logo styling */
+.logoContainer {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-basis: 150px; /* Prevent logo from expanding the flex container */
+  justify-content: flex-start; /* Ensure logo aligns to the left */
+  padding-left: 0; /* Remove any unintended left padding */
+}
+
+.logoContainer img {
+  max-width: 100%; /* Ensure the logo doesn't stretch or add spacing */
+  height: auto;
+}
+
+/* Centered nav links */
+.navLinks {
+  display: flex;
+  justify-content: center;
+  flex-grow: 1; /* Grow to fill available space */
+  text-align: center;
+}
+
+/* Simplified link styling */
+.nav a {
+  color: #000;
+  text-decoration: none;
+  font-size: 1.2rem;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav a:hover {
+  color: #66fcf1; /* Subtle color change on hover */
+}
+
+/* Remove background, shadows, and borders */
+.nav a {
+  background: none; /* Remove any background */
+  border: none;
+  box-shadow: none;
+  padding: 0; /* Keep it simple without padding */
+}
+
+/* Sign-in container */
+.signInContainer {
+  display: flex;
+  justify-content: flex-end;
+  flex-basis: 150px; /* Same size as logoContainer to balance */
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .nav {
+    padding: 1em 2em;
+  }
+
+  .nav a {
+    font-size: 1rem;
+  }
+
+  .navLinks {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}

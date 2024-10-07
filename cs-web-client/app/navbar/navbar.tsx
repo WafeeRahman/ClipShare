@@ -6,18 +6,20 @@ import SignIn from "./sign-in";
 import { onAuthStateChangeHelper } from "../firebase/firebase";
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
+
 export default function Navbar() {
     const [user, setUser] = useState<User | null>(null);
+
     useEffect(() => {
-      
-        const unsubscribe =  onAuthStateChangeHelper((user) => {
+        const unsubscribe = onAuthStateChangeHelper((user) => {
             setUser(user);
         });
-        
-        return () => unsubscribe(); //Execute Unsub functrio
-    });
+        return () => unsubscribe(); // Clean up subscription
+    }, []);
+
     return (
         <nav className={styles.nav}>
+            {/* Logo */}
             <Link href="/" className={styles.logoContainer}>
                 <Image
                     src="/ClipShare.svg"
@@ -27,11 +29,16 @@ export default function Navbar() {
                     priority
                 />
             </Link>
-            {
-                user && <Link href="/upload">Upload Video</Link>
-            }
-   
-            <SignIn user={user}/>
+
+            {/* Centered Upload Link */}
+            <div className={styles.navLinks}>
+                {user && <Link href="/upload">Upload Video</Link>}
+            </div>
+
+            {/* Sign In Button */}
+            <div className={styles.signInContainer}>
+                <SignIn user={user} />
+            </div>
         </nav>
     );
 }
