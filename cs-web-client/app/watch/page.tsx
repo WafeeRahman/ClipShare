@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import styled from 'styled-components';
 
-export default function Watch() {
+function WatchComponent() {
   const videoPrefix = 'https://storage.googleapis.com/clipshare-processed-videos/';
   const searchParams = useSearchParams();
   const videoSrc = searchParams.get('v');
@@ -47,7 +47,16 @@ export default function Watch() {
   );
 }
 
-// Styled Components
+// Wrap the WatchComponent in Suspense
+export default function Watch() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <WatchComponent />
+    </Suspense>
+  );
+}
+
+// Styled Components (remain the same)
 
 const Container = styled.div`
   display: flex;

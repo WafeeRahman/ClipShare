@@ -13,7 +13,7 @@ export default async function Home() {
     <main className={styles.container}>
       <Search />
       <h1 className={styles.title}>Recent Uploads</h1>
-      <h5>Welcome to ClipShare!, Upload your gaming clips, twitch clips, and more!</h5>
+      <div><h5>Welcome to ClipShare Library! Upload your gaming clips, twitch clips, and more!</h5></div>
       <div className={styles.videoGrid}>
         {videos.map((video) => (
           <Link

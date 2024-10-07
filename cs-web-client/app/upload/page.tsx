@@ -1,7 +1,8 @@
-'use client'
+'use client';
 import { uploadVideo } from "../firebase/functions"; // Adjust the import path as necessary
 import styles from "./upload.module.css"; // Update the path as necessary
 import React, { useState, useEffect } from "react";
+import Link from "next/link"; // Import Link for the "Back to Home" button
 
 export default function Upload() {
     const [file, setFile] = useState<File | null>(null);
@@ -9,6 +10,7 @@ export default function Upload() {
     const [description, setDescription] = useState('');
     const [key, setKey] = useState('');
     const [loading, setLoading] = useState(false);
+    const [uploadComplete, setUploadComplete] = useState(false); // New state to track if upload is complete
     const [pageLoading, setPageLoading] = useState(true); // Page loading state
 
     useEffect(() => {
@@ -31,6 +33,7 @@ export default function Upload() {
                 // Call the uploadVideo function with all necessary parameters
                 const response = await uploadVideo(file, title, description, key);
                 alert(`File uploaded successfully. Server responded with: ${JSON.stringify(response)}`);
+                setUploadComplete(true); // Set upload complete state
             } catch (error) {
                 alert(`Failed to upload file: ${error}`);
             } finally {
@@ -44,7 +47,20 @@ export default function Upload() {
         return (
             <div className={styles.loadingScreen}>
                 <div className={styles.circle}></div>
-                <img src="/ClipShare.svg" alt="Logo" className={styles.logo} /> 
+                <img src="/ClipShare.svg" alt="Logo" className={styles.logo} />
+            </div>
+        );
+    }
+
+    // If the upload is complete, show a message with a Back to Home button
+    if (uploadComplete) {
+        return (
+            <div className={styles.uploadContainer}>
+                <h1 className={styles.successMessage}>Upload Complete!</h1>
+                <p>Your video has been uploaded successfully. You can return to the home page.</p>
+                <Link href="/">
+                    <button className={styles.submitBtn}>Back to Home</button>
+                </Link>
             </div>
         );
     }

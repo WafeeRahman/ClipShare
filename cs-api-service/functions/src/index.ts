@@ -25,7 +25,7 @@ export interface Video {
 
 // Fetch the latest videos
 export const getVideos = onCall({ maxInstances: 1 }, async () => {
-  const querySnapshot = await firestore.collection(videoCollectionId).get();
+  const querySnapshot = await firestore.collection(videoCollectionId).limit(100).get();
   return querySnapshot.docs.map((doc) => doc.data());
 });
 
