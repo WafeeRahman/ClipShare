@@ -21,6 +21,10 @@ export async function uploadVideo(file: File, title: string, description: string
     fileExtension: file.name.split('.').pop(),
   });
 
+  const fileName = response?.data?.fileName;
+
+  // Include 'fileName' in the data sent to the backend
+
   // Upload the file to the signed URL
   const uploadResult = await fetch(response?.data?.url, {
     method: 'PUT',
@@ -30,8 +34,16 @@ export async function uploadVideo(file: File, title: string, description: string
     body: file,
   });
 
+  await saveVideoDetailsFunction({
+    filename: fileName,
+    title,
+    description,
+    key,
+  });
+
   return uploadResult;
 }
+
 
 export async function getVideos() {
   const response = await getVideosFunction();

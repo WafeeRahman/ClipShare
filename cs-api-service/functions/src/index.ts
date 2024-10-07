@@ -23,13 +23,12 @@ export interface Video {
   key?: string;
 }
 
-// Fetch the latest 10 videos
+// Fetch the latest videos
 export const getVideos = onCall({ maxInstances: 1 }, async () => {
-  const querySnapshot = await firestore.collection(videoCollectionId).limit(10).get();
+  const querySnapshot = await firestore.collection(videoCollectionId).get();
   return querySnapshot.docs.map((doc) => doc.data());
 });
 
-// Fetch videos by search key
 export const getVideoByKey = onCall({ maxInstances: 1 }, async (request) => {
   const searchKey = request.data.key;
 
@@ -46,11 +45,15 @@ export const getVideoByKey = onCall({ maxInstances: 1 }, async (request) => {
     .get();
 
   if (querySnapshot.empty) {
-    return { videos: [] };
+    return { videos: [] }; // Return an empty array if no videos are found
   }
 
-  const videos = querySnapshot.docs.map((doc) => doc.data());
-  return { videos };
+  const videos = querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data()  // Include the id and video data in the response
+  }));
+
+  return { videos }; // Return videos array in the response
 });
 
 // Create a new user on Firebase Auth creation
@@ -95,7 +98,6 @@ export const generateUploadUrl = onCall({ maxInstances: 1 }, async (request) => 
 });
 
 export const saveVideoDetails = onCall({ maxInstances: 1 }, async (request) => {
-  // Check if the user is authenticated
   if (!request.auth) {
     throw new functions.https.HttpsError(
       "failed-precondition",
@@ -103,7 +105,6 @@ export const saveVideoDetails = onCall({ maxInstances: 1 }, async (request) => {
     );
   }
 
-  const auth = request.auth;
   const videoData = request.data;
 
   // Validate required fields
@@ -111,11 +112,21 @@ export const saveVideoDetails = onCall({ maxInstances: 1 }, async (request) => {
     throw new functions.https.HttpsError('invalid-argument', 'Filename is required');
   }
 
-  // Create a reference to the Firestore document using the user's UID
-  const videoRef = firestore.collection(videoCollectionId).doc(auth.uid); // Using auth.uid as the document ID
+  // Extract the document ID from the filename
+  const filename = videoData.filename;
+  const dotIndex = filename.lastIndexOf(".");
+  const documentId = dotIndex !== -1 ? filename.substring(0, dotIndex) : filename;
+
+  // Create a reference to the Firestore document using the document ID
+  const videoRef = firestore.collection(videoCollectionId).doc(documentId);
 
   // Set or merge video details in Firestore
-  await videoRef.set(videoData, { merge: true }); // Use merge to prevent overwriting existing fields
+  await videoRef.set(
+    {
+      ...videoData,
+    },
+    { merge: true }
+  );
 
   return { success: true, id: videoRef.id }; // Return success and the document ID
 });
