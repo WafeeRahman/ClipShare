@@ -5,7 +5,8 @@
 **Note**: The project is deployed online, but the link is not publicly available. If you're interested in viewing the live application or have any questions, please reach out to me on [LinkedIn](https://www.linkedin.com/in/[your-profile](https://www.linkedin.com/in/wafee-rahman-772108270/)).
 
 ## Demo
-![ClipShareDemo (1)](https://github.com/user-attachments/assets/382ec040-638a-4dc2-bbf2-c719c1ad1671)
+![ezgif-3-0f92042798](https://github.com/user-attachments/assets/b840a570-2ff3-4f9b-841e-474b3cba9ab6)
+
 
 
 
