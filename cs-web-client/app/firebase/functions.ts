@@ -7,6 +7,7 @@ const getVideoByKeyFunction = httpsCallable(functions, 'getVideoByKey');
 const saveVideoDetailsFunction = httpsCallable(functions, 'saveVideoDetails'); // Import saveVideoDetails
 
 export interface Video {
+  thumbnailUrl: string;
   id?: string;
   uid?: string;
   filename?: string;
@@ -47,6 +48,10 @@ export async function uploadVideo(file: File, title: string, description: string
 
 export async function getVideos() {
   const response = await getVideosFunction();
+  
+  // Log the response to check if any videos are missing fields
+  console.log('Videos response:', response.data);
+  
   return response.data as Video[];
 }
 

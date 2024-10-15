@@ -39,27 +39,42 @@ export function setupDirectories() {
  * @param processedVideoName - The name of the file to convert to {@link localProcessedVideoPath}.
  * @returns A promise that resolves when the video has been converted.
  */
-export function convertVideo(rawVideoName: string, processedVideoName: string) {
-
+export function convertVideo(rawVideoName: string, processedVideoName: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-        ffmpeg(`${localRawVideoPath}/${rawVideoName}`)
+        const inputPath = `${localRawVideoPath}/${rawVideoName}`;
+        const outputPath = `${localProcessedVideoPath}/${processedVideoName}`;
+        const thumbnailName = `thumbnail-${processedVideoName}.jpg`;
+        const thumbnailPath = `${localProcessedVideoPath}/${thumbnailName}`;
+
+        // Process video
+        ffmpeg(inputPath)
             .outputOptions("-vf", "scale=-1:360") // output files at 360p
-
             .on("end", () => {
-                console.log("Processing finished");
                 console.log("Video processed successfully.");
-                resolve();
-            })
 
+                // Generate thumbnail after video processing
+                ffmpeg(inputPath)
+                    .screenshots({
+                        timestamps: ['00:00:01'],  // Capture at 1 second
+                        filename: thumbnailName,
+                        folder: localProcessedVideoPath,
+                        size: '320x240',
+                    })
+                    .on('end', () => {
+                        console.log('Thumbnail generated successfully.');
+                        resolve();
+                    })
+                    .on('error', (err) => {
+                        console.log(`Error generating thumbnail: ${err.message}`);
+                        reject(`Error generating thumbnail: ${err.message}`);
+                    });
+            })
             .on("error", (err) => {
                 console.log(`Error processing video: ${err.message}`);
                 reject(`Internal server error: ${err.message}`);
-
             })
-
-            .save(`${localProcessedVideoPath}/${processedVideoName}`);
-    })
-
+            .save(outputPath);
+    });
 }
 
 /**
@@ -87,22 +102,19 @@ export async function downloadRawVideo(fileName: string) {
  * @returns A promise that resolves when the file has been uploaded.
  */
 export async function uploadProcessedVideo(fileName: string) {
-
     const bucket = storage.bucket(processedVideoBucketName);
 
-    //Upload Video to Bucket
+    // Upload the file
     await bucket.upload(`${localProcessedVideoPath}/${fileName}`, {
         destination: fileName,
     });
 
-    console.log(`${localProcessedVideoPath}/${fileName} uploaded to gs://${processedVideoBucketName}/${fileName}.`)
+    console.log(`${localProcessedVideoPath}/${fileName} uploaded to gs://${processedVideoBucketName}/${fileName}.`);
 
-    //Make Video Public
+    // Make the file public
     await bucket.file(fileName).makePublic();
-
-
-
 }
+
 
 
 

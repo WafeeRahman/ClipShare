@@ -78,11 +78,11 @@ function Search() {
                   <Link
                     href={`/watch?v=${video.filename}&title=${encodeURIComponent(video.title)}&description=${encodeURIComponent(video.description)}&key=${encodeURIComponent(video.key)}`}
                   >
-                    <Image
-                      src={'/thumbnail.png'} // Replace with actual thumbnail URL if available
-                      alt={`${video.title} thumbnail`}
-                      width={180} // Reduce thumbnail size
-                      height={100}
+                    <img
+                      src={video.thumbnailUrl || '/thumbnail.png'}
+                      alt='video thumbnail'
+                      width={240}
+                      height={160}
                       className="thumbnail"
                     />
                     <VideoTitle>{video.title}</VideoTitle>
