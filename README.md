@@ -20,29 +20,24 @@
 
 ## Tech Stack
 
-### Refactored Backend
-
-- **Node.js & Express**: Server-side logic, API routing, data validation, and error handling.
+### Backend
 - **Firebase Firestore**: Cloud-hosted NoSQL database for scalable data storage.
 - **Firebase Cloud Functions**: Serverless functions for handling backend logic and integration with Firebase services.
 - **Google Cloud Platform**: Deployed video processing service using Docker containers, enabling seamless video processing with Pub/Sub messaging.
 - **OAuth2 Authorization**: Secure user authentication and function execution.
 
-### Revamped Frontend
+### Frontend
 
 - **React.js & Next.js**: Dynamic and responsive user interface with server-side rendering capabilities.
 - **TypeScript**: Static typing for safer and more maintainable code.
 - **Styled-components**: CSS-in-JS for styling React components.
 - **Material UI**: Modern and consistent design system for UI components.
-- **Vite**: Fast and optimized build tool with hot-reload capabilities.
 
 ### Additional Technologies
 
 - **Docker**: Containerization of video processing service for scalability and ease of deployment.
 - **Google Cloud Pub/Sub**: Messaging service for communication between services.
 - **Firebase Storage**: Secure and scalable storage for user-uploaded videos.
-- **ESLint & Prettier**: Code linting and formatting for code consistency.
-- **GitHub**: Version control and collaboration.
 
 ## Architecture Overview
 
