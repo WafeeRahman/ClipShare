@@ -4,7 +4,7 @@
 
 **Note**: The project is deployed online, but the link is not publicly available. If you're interested in viewing the live application or have any questions, please reach out to me on [LinkedIn](https://www.linkedin.com/in/your-profile).
 
-## Demo (Update: The site now supports video thumbnails!, this demo will be updated to reflect that soon!)
+## Demo (Update: The site now supports video thumbnails!)
 
 ![ezgif-3-0f92042798](https://github.com/user-attachments/assets/74dabb31-9616-4e7d-80bd-d1413edb4c8d)
 
