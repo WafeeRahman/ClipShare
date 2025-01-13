@@ -6,7 +6,8 @@
 
 ## Demo (Update: The site now supports video thumbnails!)
 
-![ezgif-3-0f92042798](https://github.com/user-attachments/assets/74dabb31-9616-4e7d-80bd-d1413edb4c8d)
+![ClipShare_1 1_Demo (2)](https://github.com/user-attachments/assets/3dd91985-422e-448f-b69b-1424d9c364b3)
+
 
 
 ## Features
