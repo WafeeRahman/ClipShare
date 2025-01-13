@@ -1,6 +1,6 @@
 # ClipShare
 
-**ClipShare** is a full-stack web application designed to allow users to upload, search, and watch videos. This project showcases a modern and dynamic user experience with a focus on smooth animations and responsive design. The application leverages cloud video processing to handle user-submitted videos efficiently.
+**ClipShare** is cloud-based full-stack web solution I designed to allow users to upload, search, watch and archives videos. This project showcases a modern and dynamic user experience with a focus on smooth animations and responsive design. The application leverages cloud video processing to handle user-submitted videos efficiently. Clipshare was an opportunity to develop a tool I can use to archive my clips onto the cloud in a youtube-esque format while building skills such leveraging cloud tools like GCP, working with firebase, developing using NextJS and TypeScript in React.
 
 **Note**: The project is deployed online, but the link is not publicly available. If you're interested in viewing the live application or have any questions, please reach out to me on [LinkedIn](https://www.linkedin.com/in/your-profile).
 
