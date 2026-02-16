@@ -1,35 +1,108 @@
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { getVideos } from './firebase/functions';
-import styles from './page.module.css';
-import Search from './search/search';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { getVideos, checkWhitelist, Video } from "./firebase/functions";
+import { onAuthStateChangeHelper } from "./firebase/firebase";
+import { User } from "firebase/auth";
+import styles from "./page.module.css";
+import Search from "./search/search";
 
-export default async function Home() {
-  const videos = await getVideos();
-  console.log(videos);
+export default function Home() {
+  const [user, setUser] = useState<User | null>(null);
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = onAuthStateChangeHelper((u) => {
+      setUser(u);
+      if (!u) {
+        setAllowed(null);
+        setVideos([]);
+        setLoading(false);
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    checkWhitelist()
+      .then((ok) => {
+        setAllowed(ok);
+        if (ok) return getVideos();
+        return [];
+      })
+      .then((v) => setVideos(v || []))
+      .catch(() => setAllowed(false))
+      .finally(() => setLoading(false));
+  }, [user]);
+
+  if (loading) {
+    return (
+      <main className={styles.container}>
+        <div className={styles.center}>
+          <div className={styles.spinner} />
+        </div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className={styles.container}>
+        <h1 className={styles.title}>ClipShare</h1>
+        <p className={styles.subtitle}>
+          Sign in with Google to access the library.
+        </p>
+      </main>
+    );
+  }
+
+  if (allowed === false) {
+    return (
+      <main className={styles.container}>
+        <h1 className={styles.title}>Access Denied</h1>
+        <p className={styles.subtitle}>
+          Your account ({user.email}) is not on the whitelist.
+          <br />
+          Ask an admin to add you.
+        </p>
+      </main>
+    );
+  }
+
   return (
     <main className={styles.container}>
       <Search />
       <h1 className={styles.title}>Recent Uploads</h1>
       <div>
-        <h5>Welcome to ClipShare Library! Upload your gaming clips, twitch clips, and more!</h5>
+        <h5>
+          Welcome to ClipShare Library! Upload your gaming clips, twitch clips,
+          and more!
+        </h5>
       </div>
       <div className={styles.videoGrid}>
         {videos.map((video) => {
-          if (!video.filename || !video.title) {
-            return null; // Skip videos with missing essential fields
-          }
+          if (!video.filename || !video.title) return null;
           return (
             <Link
-              href={`/watch?v=${video.filename}&title=${encodeURIComponent(video.title || '')}&description=${encodeURIComponent(video.description || '')}&key=${encodeURIComponent(video.key || '')}`}
+              href={`/watch?v=${video.filename}&title=${encodeURIComponent(
+                video.title || ""
+              )}&description=${encodeURIComponent(
+                video.description || ""
+              )}&key=${encodeURIComponent(
+                video.key || ""
+              )}&shareId=${encodeURIComponent(video.shareId || "")}`}
               key={video.filename}
               className={styles.videoLink}
             >
               <div className={styles.videoItem}>
                 <img
-                  src={video.thumbnailUrl || '/thumbnail.png'}
-                  alt='video thumbnail'
+                  src={video.thumbnailUrl || "/thumbnail.png"}
+                  alt="video thumbnail"
                   width={240}
                   height={160}
                   className={styles.thumbnail}

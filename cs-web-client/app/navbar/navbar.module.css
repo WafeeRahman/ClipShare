@@ -31,8 +31,9 @@
 .navLinks {
   display: flex;
   justify-content: center;
-  flex-grow: 1; /* Grow to fill available space */
+  flex-grow: 1;
   text-align: center;
+  gap: 2rem;
 }
 
 /* Simplified link styling */
