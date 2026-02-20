@@ -51,3 +51,5 @@ The application is structured with a clear separation of concerns:
 - **Data Flow**: Users interact with the frontend, which communicates with the backend APIs. Uploaded videos are sent to Cloud Storage, processed, and then made available for playback.
 
 This architecture ensures that **ClipShare** is scalable, maintainable, and provides a seamless user experience for uploading and viewing videos.
+
+Note: I've recently been revisiting and tinkering around with claude code with this project, seeing what this tool can do and what features it's capable of adding to enhance the application
