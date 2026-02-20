@@ -1,39 +1,30 @@
 # Stage 1: Build stage
 FROM node:18 AS builder
 
-# Set the working directory
 WORKDIR /app
 
-# Copy package*.json files
 COPY package*.json ./
-
-# Install all dependencies
 RUN npm install
 
-# Copy other source code files
 COPY . .
-
-# Build the app
 RUN npm run build
 
 # Stage 2: Production stage
-FROM node:18
+FROM node:18-slim
 
-# Set the working directory
 WORKDIR /app
 
-# Copy package*.json files
 COPY package*.json ./
-
-# Install only production dependencies
 RUN npm install --only=production
 
-# Copy built app from the builder stage
+# Copy built app and public assets from builder
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
+# Next.js needs next binary from node_modules at runtime
+COPY --from=builder /app/node_modules/.package-lock.json ./node_modules/.package-lock.json
+COPY --from=builder /app/node_modules/next ./node_modules/next
+COPY --from=builder /app/node_modules/@next ./node_modules/@next
 
-# Expose the listening port
 EXPOSE 3000
 
-# Run the app
 CMD ["npm", "start"]

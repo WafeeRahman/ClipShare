@@ -111,7 +111,8 @@
 }
 
 .uploadForm input,
-.uploadForm textarea {
+.uploadForm textarea,
+.uploadForm select {
     width: 100%;
     padding: 14px;
     margin-bottom: 15px;
@@ -124,7 +125,8 @@
 }
 
 .uploadForm input:focus,
-.uploadForm textarea:focus {
+.uploadForm textarea:focus,
+.uploadForm select:focus {
     background-color: #555;
     border-color: #66fcf1; /* Stylish focus border color */
     outline: none;
