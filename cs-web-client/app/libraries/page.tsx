@@ -9,6 +9,7 @@ import {
   getNamespaceVideos,
   addNamespaceMember,
   removeNamespaceMember,
+  generateNamespaceInvite,
   Namespace,
   Video,
 } from "../firebase/functions";
@@ -21,6 +22,8 @@ export default function LibrariesPage() {
   const [memberEmail, setMemberEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [inviteUrl, setInviteUrl] = useState("");
+  const [inviteCopied, setInviteCopied] = useState(false);
 
   const refresh = () => {
     getMyNamespaces()
@@ -34,6 +37,8 @@ export default function LibrariesPage() {
   }, []);
 
   useEffect(() => {
+    setInviteUrl("");
+    setInviteCopied(false);
     if (!selected) {
       setVideos([]);
       return;
@@ -66,6 +71,23 @@ export default function LibrariesPage() {
     } catch (e: any) {
       setError(e.message || "Failed to add member");
     }
+  };
+
+  const handleGenerateInvite = async () => {
+    if (!selected) return;
+    setError("");
+    try {
+      const result = await generateNamespaceInvite(selected.id);
+      setInviteUrl(`${window.location.origin}/join/${result.inviteCode}`);
+      setInviteCopied(false);
+    } catch (e: any) {
+      setError(e.message || "Failed to generate invite link");
+    }
+  };
+
+  const handleCopyInvite = () => {
+    navigator.clipboard.writeText(inviteUrl);
+    setInviteCopied(true);
   };
 
   const handleRemoveMember = async (email: string) => {
@@ -148,6 +170,17 @@ export default function LibrariesPage() {
             />
             <Btn onClick={handleAddMember}>Add</Btn>
           </AddRow>
+
+          <SectionTitle>Invite Link</SectionTitle>
+          <Btn onClick={handleGenerateInvite}>Generate Invite Link</Btn>
+          {inviteUrl && (
+            <InviteRow>
+              <InviteUrlText>{inviteUrl}</InviteUrlText>
+              <CopyBtn onClick={handleCopyInvite}>
+                {inviteCopied ? "Copied" : "Copy"}
+              </CopyBtn>
+            </InviteRow>
+          )}
 
           <SectionTitle>Videos in Library</SectionTitle>
           {videos.length === 0 && (
@@ -315,6 +348,39 @@ const VideoCard = styled.div`
     margin-top: 6px;
     font-weight: 600;
     font-size: 0.95rem;
+  }
+`;
+
+const InviteRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #f5f5f5;
+  border-radius: 8px;
+`;
+
+const InviteUrlText = styled.span`
+  flex: 1;
+  font-size: 0.9rem;
+  word-break: break-all;
+  color: #333;
+`;
+
+const CopyBtn = styled.button`
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid #000;
+  background: transparent;
+  color: #000;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  &:hover {
+    background: #000;
+    color: #fff;
   }
 `;
 

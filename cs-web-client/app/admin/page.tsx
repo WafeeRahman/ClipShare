@@ -6,6 +6,9 @@ import {
   getWhitelistEntries,
   addToWhitelist,
   removeFromWhitelist,
+  getWhitelistRequests,
+  approveWhitelistRequest,
+  denyWhitelistRequest,
 } from "../firebase/functions";
 
 interface WhitelistEntry {
@@ -14,10 +17,19 @@ interface WhitelistEntry {
   addedAt: number;
 }
 
+interface WhitelistRequest {
+  email: string;
+  uid: string;
+  requestedAt: number;
+  status: string;
+}
+
 export default function AdminPage() {
   const [entries, setEntries] = useState<WhitelistEntry[]>([]);
+  const [requests, setRequests] = useState<WhitelistRequest[]>([]);
   const [newEmail, setNewEmail] = useState("");
   const [loading, setLoading] = useState(true);
+  const [requestsLoading, setRequestsLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -29,8 +41,17 @@ export default function AdminPage() {
       .finally(() => setLoading(false));
   };
 
+  const refreshRequests = () => {
+    setRequestsLoading(true);
+    getWhitelistRequests()
+      .then(setRequests)
+      .catch(() => {})
+      .finally(() => setRequestsLoading(false));
+  };
+
   useEffect(() => {
     refresh();
+    refreshRequests();
   }, []);
 
   const handleAdd = async () => {
@@ -58,6 +79,27 @@ export default function AdminPage() {
       refresh();
     } catch (e: any) {
       setError(e.message || "Failed to remove");
+    }
+  };
+
+  const handleApprove = async (email: string) => {
+    setError("");
+    try {
+      await approveWhitelistRequest(email);
+      refreshRequests();
+      refresh();
+    } catch (e: any) {
+      setError(e.message || "Failed to approve request");
+    }
+  };
+
+  const handleDeny = async (email: string) => {
+    setError("");
+    try {
+      await denyWhitelistRequest(email);
+      refreshRequests();
+    } catch (e: any) {
+      setError(e.message || "Failed to deny request");
     }
   };
 
@@ -112,6 +154,48 @@ export default function AdminPage() {
                   <td>
                     <RemoveBtn onClick={() => handleRemove(e.email)}>
                       Remove
+                    </RemoveBtn>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+      </Section>
+
+      <Section>
+        <SectionTitle>Pending Access Requests</SectionTitle>
+        {requestsLoading ? (
+          <Spinner />
+        ) : requests.length === 0 ? (
+          <p style={{ color: "#888" }}>No pending requests</p>
+        ) : (
+          <Table>
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Requested</th>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map((r) => (
+                <tr key={r.email}>
+                  <td>{r.email}</td>
+                  <td>
+                    {r.requestedAt
+                      ? new Date(r.requestedAt).toLocaleDateString()
+                      : "—"}
+                  </td>
+                  <td>
+                    <ApproveBtn onClick={() => handleApprove(r.email)}>
+                      Approve
+                    </ApproveBtn>
+                  </td>
+                  <td>
+                    <RemoveBtn onClick={() => handleDeny(r.email)}>
+                      Deny
                     </RemoveBtn>
                   </td>
                 </tr>
@@ -176,6 +260,20 @@ const Btn = styled.button`
   cursor: pointer;
   &:hover {
     background: #333;
+  }
+`;
+
+const ApproveBtn = styled.button`
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid #060;
+  background: transparent;
+  color: #060;
+  cursor: pointer;
+  font-size: 0.85rem;
+  &:hover {
+    background: #060;
+    color: #fff;
   }
 `;
 
