@@ -20,6 +20,7 @@ export function getFirestore(): admin.firestore.Firestore {
 export interface VideoDetails {
   filename: string;
   title: string;
+  description: string;
   status: "processing" | "processed";
   namespace: string;
   shareId: string;
@@ -89,4 +90,16 @@ export async function addNamespaceMember(
     await nsRef.update({ members });
     console.log(`Added ${email} to namespace ${namespaceId}`);
   }
+}
+
+export async function getNamespaceVideoCount(
+  namespaceId: string
+): Promise<number> {
+  const db = getFirestore();
+  const snapshot = await db
+    .collection(VIDEOS_COLLECTION)
+    .where("namespace", "==", namespaceId)
+    .count()
+    .get();
+  return snapshot.data().count;
 }

@@ -6,7 +6,6 @@ import {
   Message,
   REST,
   Routes,
-  ChatInputCommandInteraction,
 } from "discord.js";
 import * as admin from "firebase-admin";
 import http from "http";
@@ -16,13 +15,22 @@ import {
   initFirestore,
   saveVideoDetails,
   ensureNamespace,
+  getNamespaceVideoCount,
 } from "./firestore";
 
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID || "clipshare-f3cec";
 const PORT = parseInt(process.env.PORT || "8080", 10);
-const BOT_EMAIL = "clipbot-discord@clipshare-f3cec.iam.gserviceaccount.com";
-const WEB_BASE_URL = "https://clipshare-f3cec.web.app";
+const BOT_EMAIL =
+  process.env.BOT_EMAIL ||
+  "clipbot-discord@clipshare-f3cec.iam.gserviceaccount.com";
+const WEB_BASE_URL =
+  process.env.WEB_BASE_URL || "https://clipshare-f3cec.web.app";
+
+// Comma-separated list of channel IDs to watch. Empty = all channels.
+const WATCH_CHANNELS = process.env.WATCH_CHANNELS
+  ? new Set(process.env.WATCH_CHANNELS.split(",").map((c) => c.trim()))
+  : null;
 
 const VIDEO_EXTENSIONS = new Set([
   "mp4",
@@ -45,7 +53,10 @@ const VIDEO_CONTENT_TYPES = new Set([
 ]);
 
 function isVideoAttachment(attachment: Attachment): boolean {
-  if (attachment.contentType && VIDEO_CONTENT_TYPES.has(attachment.contentType)) {
+  if (
+    attachment.contentType &&
+    VIDEO_CONTENT_TYPES.has(attachment.contentType)
+  ) {
     return true;
   }
   const ext = attachment.name?.split(".").pop()?.toLowerCase();
@@ -60,20 +71,31 @@ function getExtension(attachment: Attachment): string {
   return "mp4";
 }
 
+function getExtensionFromUrl(url: string): string {
+  try {
+    const pathname = new URL(url).pathname;
+    const ext = pathname.split(".").pop()?.toLowerCase();
+    if (ext && VIDEO_EXTENSIONS.has(ext)) {
+      return ext;
+    }
+  } catch {}
+  return "mp4";
+}
+
 function generateShareId(documentId: string): string {
   return `${documentId.slice(-6)}-${Date.now().toString(36)}`;
 }
 
+// Regex to find video URLs in message text
+const VIDEO_URL_REGEX =
+  /https?:\/\/[^\s]+\.(?:mp4|mov|webm|avi|mkv|flv|wmv)(?:\?[^\s]*)?/gi;
+
 async function handleVideoAttachment(
   attachment: Attachment,
   message: Message
-): Promise<void> {
-  const guildId = message.guildId;
-  const guildName = message.guild?.name;
-  if (!guildId || !guildName) {
-    console.log("Message is not from a guild, skipping.");
-    return;
-  }
+): Promise<string> {
+  const guildId = message.guildId!;
+  const guildName = message.guild!.name;
 
   const ext = getExtension(attachment);
   const timestamp = Date.now();
@@ -81,20 +103,19 @@ async function handleVideoAttachment(
   const documentId = `discord-${guildId}-${timestamp}`;
 
   console.log(
-    `Processing video from ${message.author.tag} in ${guildName}: ${attachment.name}`
+    `Processing attachment from ${message.author.tag} in ${guildName}: ${attachment.name}`
   );
 
   const buffer = await downloadFromUrl(attachment.url);
-
   await uploadToRawBucket(buffer, fileName);
 
   const namespaceId = await ensureNamespace(guildId, guildName, BOT_EMAIL);
-
   const shareId = generateShareId(documentId);
 
   await saveVideoDetails(documentId, {
     filename: fileName,
     title: attachment.name || `Discord clip ${timestamp}`,
+    description: `Clipped by ${message.author.tag} in #${(message.channel as any).name || "unknown"}`,
     status: "processing",
     namespace: namespaceId,
     shareId,
@@ -107,9 +128,48 @@ async function handleVideoAttachment(
     createdAt: timestamp,
   });
 
-  await message.reply(
-    `Video uploaded to ClipShare. View it at: ${WEB_BASE_URL}/clip/${shareId}`
+  return shareId;
+}
+
+async function handleVideoUrl(
+  url: string,
+  message: Message
+): Promise<string> {
+  const guildId = message.guildId!;
+  const guildName = message.guild!.name;
+
+  const ext = getExtensionFromUrl(url);
+  const timestamp = Date.now();
+  const fileName = `discord-${guildId}-${timestamp}.${ext}`;
+  const documentId = `discord-${guildId}-${timestamp}`;
+
+  console.log(
+    `Processing URL from ${message.author.tag} in ${guildName}: ${url}`
   );
+
+  const buffer = await downloadFromUrl(url);
+  await uploadToRawBucket(buffer, fileName);
+
+  const namespaceId = await ensureNamespace(guildId, guildName, BOT_EMAIL);
+  const shareId = generateShareId(documentId);
+
+  await saveVideoDetails(documentId, {
+    filename: fileName,
+    title: `Clip from ${message.author.tag}`,
+    description: `Clipped by ${message.author.tag} in #${(message.channel as any).name || "unknown"}`,
+    status: "processing",
+    namespace: namespaceId,
+    shareId,
+    uid: `discord-bot-${guildId}`,
+    sourceType: "discord",
+    discordGuildId: guildId,
+    discordChannelId: message.channelId,
+    discordMessageId: message.id,
+    discordAuthor: message.author.tag,
+    createdAt: timestamp,
+  });
+
+  return shareId;
 }
 
 async function registerSlashCommands(clientId: string): Promise<void> {
@@ -120,6 +180,10 @@ async function registerSlashCommands(clientId: string): Promise<void> {
       name: "clipshare-link",
       description:
         "Get the ClipShare web URL for this server's video library",
+    },
+    {
+      name: "clipshare-status",
+      description: "Show how many clips have been saved from this server",
     },
   ];
 
@@ -164,40 +228,85 @@ async function main(): Promise<void> {
 
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot) return;
+    if (!message.guildId || !message.guild) return;
 
+    // Channel filtering
+    if (WATCH_CHANNELS && !WATCH_CHANNELS.has(message.channelId)) return;
+
+    const shareIds: string[] = [];
+
+    // Handle file attachments
     const videoAttachments = message.attachments.filter(isVideoAttachment);
-    if (videoAttachments.size === 0) return;
-
     for (const [, attachment] of videoAttachments) {
       try {
-        await handleVideoAttachment(attachment, message);
+        const shareId = await handleVideoAttachment(attachment, message);
+        shareIds.push(shareId);
       } catch (err) {
-        console.error(`Failed to process attachment ${attachment.name}:`, err);
-        await message
-          .reply("Failed to upload this video to ClipShare. Please try again.")
-          .catch(() => {});
+        console.error(
+          `Failed to process attachment ${attachment.name}:`,
+          err
+        );
       }
     }
+
+    // Handle video URLs in message text
+    if (message.content) {
+      const urls = message.content.match(VIDEO_URL_REGEX) || [];
+      for (const url of urls) {
+        try {
+          const shareId = await handleVideoUrl(url, message);
+          shareIds.push(shareId);
+        } catch (err) {
+          console.error(`Failed to process URL ${url}:`, err);
+        }
+      }
+    }
+
+    if (shareIds.length === 0) return;
+
+    const links = shareIds
+      .map((id) => `${WEB_BASE_URL}/clip/${id}`)
+      .join("\n");
+
+    const noun = shareIds.length === 1 ? "clip" : "clips";
+    await message
+      .reply(`Saved ${shareIds.length} ${noun} to ClipShare:\n${links}`)
+      .catch(() => {});
   });
 
   client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
-    if (interaction.commandName === "clipshare-link") {
-      const guildId = interaction.guildId;
-      if (!guildId) {
-        await interaction.reply({
-          content: "This command can only be used in a server.",
-          ephemeral: true,
-        });
-        return;
-      }
+    const guildId = interaction.guildId;
+    if (!guildId) {
+      await interaction.reply({
+        content: "This command can only be used in a server.",
+        ephemeral: true,
+      });
+      return;
+    }
 
+    if (interaction.commandName === "clipshare-link") {
       const namespaceId = `discord-${guildId}`;
       const url = `${WEB_BASE_URL}/libraries?ns=${namespaceId}`;
       await interaction.reply(
         `ClipShare library for this server: ${url}`
       );
+    }
+
+    if (interaction.commandName === "clipshare-status") {
+      const namespaceId = `discord-${guildId}`;
+      try {
+        const count = await getNamespaceVideoCount(namespaceId);
+        await interaction.reply(
+          `This server has **${count}** clips saved to ClipShare.`
+        );
+      } catch {
+        await interaction.reply({
+          content: "No clips saved yet from this server.",
+          ephemeral: true,
+        });
+      }
     }
   });
 
