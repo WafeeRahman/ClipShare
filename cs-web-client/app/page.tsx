@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getVideos, checkWhitelist, Video } from "./firebase/functions";
+import { getVideos, checkWhitelist, requestWhitelistAccess, Video } from "./firebase/functions";
 import { onAuthStateChangeHelper } from "./firebase/firebase";
 import { User } from "firebase/auth";
 import styles from "./page.module.css";
@@ -13,6 +13,8 @@ export default function Home() {
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessRequested, setAccessRequested] = useState(false);
+  const [requestingAccess, setRequestingAccess] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChangeHelper((u) => {
@@ -61,6 +63,18 @@ export default function Home() {
     );
   }
 
+  const handleRequestAccess = async () => {
+    setRequestingAccess(true);
+    try {
+      await requestWhitelistAccess();
+      setAccessRequested(true);
+    } catch {
+      setAccessRequested(false);
+    } finally {
+      setRequestingAccess(false);
+    }
+  };
+
   if (allowed === false) {
     return (
       <main className={styles.container}>
@@ -70,6 +84,30 @@ export default function Home() {
           <br />
           Ask an admin to add you.
         </p>
+        {accessRequested ? (
+          <p className={styles.subtitle}>
+            Access requested! An admin will review your request.
+          </p>
+        ) : (
+          <button
+            onClick={handleRequestAccess}
+            disabled={requestingAccess}
+            style={{
+              marginTop: "16px",
+              padding: "12px 32px",
+              borderRadius: "8px",
+              border: "none",
+              background: "#000",
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: "1rem",
+              cursor: requestingAccess ? "not-allowed" : "pointer",
+              opacity: requestingAccess ? 0.6 : 1,
+            }}
+          >
+            {requestingAccess ? "Requesting..." : "Request Access"}
+          </button>
+        )}
       </main>
     );
   }

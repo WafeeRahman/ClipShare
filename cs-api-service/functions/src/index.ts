@@ -367,3 +367,153 @@ export const saveVideoDetails = onCall(
     return { success: true, id: videoRef.id, shareId };
   }
 );
+
+// ---------------------------------------------------------------------------
+// Namespace invites
+// ---------------------------------------------------------------------------
+
+export const generateNamespaceInvite = onCall(
+  { maxInstances: 1 },
+  async (request) => {
+    const auth = await requireWhitelistedUser(request);
+    const namespaceId: string = request.data?.namespaceId;
+    if (!namespaceId) {
+      throw new HttpsError("invalid-argument", "namespaceId is required.");
+    }
+    const nsDoc = await firestore
+      .collection(namespacesCollectionId)
+      .doc(namespaceId)
+      .get();
+    if (!nsDoc.exists) {
+      throw new HttpsError("not-found", "Namespace not found.");
+    }
+    if (nsDoc.data()?.ownerUid !== auth.uid) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only the owner can generate invites."
+      );
+    }
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let inviteCode = "";
+    for (let i = 0; i < 8; i++) {
+      inviteCode += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    await firestore.collection("namespace-invites").doc(inviteCode).set({
+      inviteCode,
+      namespaceId,
+      createdBy: auth.token?.email,
+      createdAt: Date.now(),
+      uses: 0,
+    });
+    return { inviteCode };
+  }
+);
+
+export const joinNamespaceByInvite = onCall(
+  { maxInstances: 1 },
+  async (request) => {
+    const auth = await requireWhitelistedUser(request);
+    const inviteCode: string = request.data?.inviteCode;
+    if (!inviteCode) {
+      throw new HttpsError("invalid-argument", "inviteCode is required.");
+    }
+    const inviteRef = firestore.collection("namespace-invites").doc(inviteCode);
+    const inviteDoc = await inviteRef.get();
+    if (!inviteDoc.exists) {
+      throw new HttpsError("not-found", "Invite not found.");
+    }
+    const inviteData = inviteDoc.data()!;
+    const nsRef = firestore
+      .collection(namespacesCollectionId)
+      .doc(inviteData.namespaceId);
+    const nsDoc = await nsRef.get();
+    if (!nsDoc.exists) {
+      throw new HttpsError("not-found", "Namespace not found.");
+    }
+    const email = auth.token?.email;
+    const members: string[] = nsDoc.data()?.members ?? [];
+    if (!members.includes(email)) {
+      members.push(email);
+      await nsRef.update({ members });
+    }
+    await inviteRef.update({ uses: (inviteData.uses ?? 0) + 1 });
+    return { success: true, namespaceName: nsDoc.data()?.name };
+  }
+);
+
+// ---------------------------------------------------------------------------
+// Whitelist access requests
+// ---------------------------------------------------------------------------
+
+export const requestWhitelistAccess = onCall(
+  { maxInstances: 1 },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "You must be signed in.");
+    }
+    const email = request.auth.token?.email;
+    if (!email) {
+      throw new HttpsError("invalid-argument", "No email associated with account.");
+    }
+    await firestore.collection("whitelist-requests").doc(email).set({
+      email,
+      uid: request.auth.uid,
+      requestedAt: Date.now(),
+      status: "pending",
+    });
+    return { success: true };
+  }
+);
+
+export const getWhitelistRequests = onCall(
+  { maxInstances: 1 },
+  async (request) => {
+    await requireWhitelistedUser(request);
+    const snapshot = await firestore
+      .collection("whitelist-requests")
+      .where("status", "==", "pending")
+      .get();
+    return snapshot.docs.map((d) => d.data());
+  }
+);
+
+export const approveWhitelistRequest = onCall(
+  { maxInstances: 1 },
+  async (request) => {
+    await requireWhitelistedUser(request);
+    const email: string = request.data?.email;
+    if (!email) {
+      throw new HttpsError("invalid-argument", "email is required.");
+    }
+    const reqRef = firestore.collection("whitelist-requests").doc(email);
+    const reqDoc = await reqRef.get();
+    if (!reqDoc.exists) {
+      throw new HttpsError("not-found", "Request not found.");
+    }
+    await firestore.collection(whitelistCollectionId).doc(email).set({
+      email,
+      addedBy: request.auth!.token?.email,
+      addedAt: Date.now(),
+    });
+    await reqRef.update({ status: "approved" });
+    return { success: true };
+  }
+);
+
+export const denyWhitelistRequest = onCall(
+  { maxInstances: 1 },
+  async (request) => {
+    await requireWhitelistedUser(request);
+    const email: string = request.data?.email;
+    if (!email) {
+      throw new HttpsError("invalid-argument", "email is required.");
+    }
+    const reqRef = firestore.collection("whitelist-requests").doc(email);
+    const reqDoc = await reqRef.get();
+    if (!reqDoc.exists) {
+      throw new HttpsError("not-found", "Request not found.");
+    }
+    await reqRef.update({ status: "denied" });
+    return { success: true };
+  }
+);

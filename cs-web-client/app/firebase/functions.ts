@@ -15,6 +15,12 @@ const removeNamespaceMemberFunction = httpsCallable(functions, "removeNamespaceM
 const getMyNamespacesFunction = httpsCallable(functions, "getMyNamespaces");
 const getNamespaceVideosFunction = httpsCallable(functions, "getNamespaceVideos");
 const getVideoByShareIdFunction = httpsCallable(functions, "getVideoByShareId");
+const generateNamespaceInviteFunction = httpsCallable(functions, "generateNamespaceInvite");
+const joinNamespaceByInviteFunction = httpsCallable(functions, "joinNamespaceByInvite");
+const requestWhitelistAccessFunction = httpsCallable(functions, "requestWhitelistAccess");
+const getWhitelistRequestsFunction = httpsCallable(functions, "getWhitelistRequests");
+const approveWhitelistRequestFunction = httpsCallable(functions, "approveWhitelistRequest");
+const denyWhitelistRequestFunction = httpsCallable(functions, "denyWhitelistRequest");
 
 export interface Video {
   id?: string;
@@ -60,6 +66,23 @@ export async function getWhitelistEntries(): Promise<{ email: string; addedBy: s
   return response.data as any[];
 }
 
+export async function requestWhitelistAccess(): Promise<void> {
+  await requestWhitelistAccessFunction();
+}
+
+export async function getWhitelistRequests(): Promise<{ email: string; uid: string; requestedAt: number; status: string }[]> {
+  const response: any = await getWhitelistRequestsFunction();
+  return response.data as any[];
+}
+
+export async function approveWhitelistRequest(email: string): Promise<void> {
+  await approveWhitelistRequestFunction({ email });
+}
+
+export async function denyWhitelistRequest(email: string): Promise<void> {
+  await denyWhitelistRequestFunction({ email });
+}
+
 // ---------------------------------------------------------------------------
 // Namespaces
 // ---------------------------------------------------------------------------
@@ -87,6 +110,16 @@ export async function getMyNamespaces(): Promise<Namespace[]> {
 export async function getNamespaceVideos(namespaceId: string): Promise<Video[]> {
   const response: any = await getNamespaceVideosFunction({ namespaceId });
   return response.data as Video[];
+}
+
+export async function generateNamespaceInvite(namespaceId: string): Promise<{ inviteCode: string }> {
+  const response: any = await generateNamespaceInviteFunction({ namespaceId });
+  return response.data as { inviteCode: string };
+}
+
+export async function joinNamespaceByInvite(inviteCode: string): Promise<{ success: boolean; namespaceName: string }> {
+  const response: any = await joinNamespaceByInviteFunction({ inviteCode });
+  return response.data as { success: boolean; namespaceName: string };
 }
 
 // ---------------------------------------------------------------------------
